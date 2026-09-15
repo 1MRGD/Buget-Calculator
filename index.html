@@ -1,81 +1,470 @@
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
   <head>
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Budget App</title>
-    <!-- Font Awesome Icons -->
+    <meta
+      name="description"
+      content="Smart Budget Calculator & Personal Finance Tracker. Manage spending, track categories with interactive charts, set budget goals, and export transactions."
+    />
+    <title>SmartBudget — Personal Finance & Expense Tracker</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome 6 Icons -->
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
     />
-    <!-- Google Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+
+    <!-- Chart.js for Interactive Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Canvas Confetti for Celebration Effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
     <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="wrapper">
-      <div class="container">
-        <div class="sub-container">
-          <!-- Budget -->
-          <div class="total-amount-container">
-            <h3>Budget</h3>
-            <p class="hide error" id="budget-error">
-              Value cannot be empty or negative
-            </p>
-            <input
-              type="number"
-              id="total-amount"
-              placeholder="Enter Total Amount"
-            />
-            <button class="submit" id="total-amount-button">Set Budget</button>
+    <!-- Background ambient lighting glow effects -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <div class="app-wrapper">
+      <!-- Top Navigation / Header -->
+      <header class="app-header">
+        <div class="header-brand">
+          <div class="brand-icon">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+          <div class="brand-text">
+            <h1>SmartBudget</h1>
+            <p class="brand-tagline">Personal Finance & Expense Tracker</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <!-- Currency Selector -->
+          <div class="currency-selector-wrapper">
+            <label for="currency-select" class="sr-only">Select Currency</label>
+            <i class="fa-solid fa-coins currency-icon"></i>
+            <select id="currency-select" class="currency-select" title="Change currency">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="INR" selected>INR (₹)</option>
+              <option value="JPY">JPY (¥)</option>
+              <option value="CAD">CAD ($)</option>
+              <option value="AUD">AUD ($)</option>
+            </select>
           </div>
 
-          <!-- Expenditure -->
-          <div class="user-amount-container">
-            <h3>Expenses</h3>
-            <p class="hide error" id="product-title-error">
-              Values cannot be empty
+          <!-- Quick Action: Demo Data -->
+          <button id="demo-data-btn" class="btn-ghost" title="Load sample transactions">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span class="btn-text">Demo Data</span>
+          </button>
+
+          <!-- Quick Action: Reset -->
+          <button id="reset-btn" class="btn-ghost btn-danger-hover" title="Reset all data">
+            <i class="fa-solid fa-arrow-rotate-left"></i>
+            <span class="btn-text">Reset</span>
+          </button>
+
+          <!-- Theme Toggle -->
+          <button
+            id="theme-toggle"
+            class="btn-icon theme-toggle"
+            aria-label="Toggle dark/light theme"
+            title="Toggle theme"
+          >
+            <i class="fa-solid fa-moon dark-icon"></i>
+            <i class="fa-solid fa-sun light-icon"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Dashboard Overview Cards -->
+      <section class="overview-section" aria-label="Budget Overview">
+        <div class="overview-cards-grid">
+          <!-- Total Budget Card -->
+          <div class="metric-card card-budget">
+            <div class="metric-header">
+              <span class="metric-title">Total Budget</span>
+              <div class="metric-icon-box bg-budget">
+                <i class="fa-solid fa-piggy-bank"></i>
+              </div>
+            </div>
+            <div class="metric-value-row">
+              <span class="currency-symbol" data-currency="₹">₹</span>
+              <span class="metric-amount" id="amount">0</span>
+            </div>
+            <div class="metric-footer">
+              <span class="metric-subtext" id="budget-status-text">Set your monthly limit</span>
+            </div>
+          </div>
+
+          <!-- Total Expenses Card -->
+          <div class="metric-card card-expenses">
+            <div class="metric-header">
+              <span class="metric-title">Total Expenses</span>
+              <div class="metric-icon-box bg-expenses">
+                <i class="fa-solid fa-arrow-trend-down"></i>
+              </div>
+            </div>
+            <div class="metric-value-row">
+              <span class="currency-symbol" data-currency="₹">₹</span>
+              <span class="metric-amount" id="expenditure-value">0</span>
+            </div>
+            <div class="metric-footer">
+              <span class="badge" id="expense-count-badge">0 Transactions</span>
+            </div>
+          </div>
+
+          <!-- Remaining Balance Card -->
+          <div class="metric-card card-balance">
+            <div class="metric-header">
+              <span class="metric-title">Remaining Balance</span>
+              <div class="metric-icon-box bg-balance">
+                <i class="fa-solid fa-scale-balanced"></i>
+              </div>
+            </div>
+            <div class="metric-value-row">
+              <span class="currency-symbol" data-currency="₹">₹</span>
+              <span class="metric-amount" id="balance-amount">0</span>
+            </div>
+            <div class="metric-footer">
+              <span class="badge badge-success" id="balance-status-badge">
+                <i class="fa-solid fa-circle-check"></i> On Track
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Budget Usage Progress Bar -->
+        <div class="budget-progress-card">
+          <div class="progress-info-row">
+            <div class="progress-label">
+              <i class="fa-solid fa-gauge-high"></i>
+              <span>Budget Utilization</span>
+            </div>
+            <div class="progress-percentage">
+              <span id="budget-percent-text">0%</span> used
+            </div>
+          </div>
+          <div class="progress-bar-track">
+            <div
+              class="progress-bar-fill"
+              id="budget-progress-fill"
+              style="width: 0%"
+            ></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Two-Column Layout -->
+      <main class="dashboard-grid">
+        <!-- LEFT COLUMN: Actions & Inputs -->
+        <div class="dashboard-col left-col">
+          <!-- Set Budget Card -->
+          <section class="card input-card" aria-labelledby="budget-card-title">
+            <div class="card-header">
+              <div class="card-title-group">
+                <i class="fa-solid fa-sliders header-accent-icon"></i>
+                <h2 id="budget-card-title">Set Monthly Budget</h2>
+              </div>
+            </div>
+
+            <p class="error-msg hide" id="budget-error">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              Please enter a valid amount greater than zero
             </p>
-            <input
-              type="text"
-              class="product-title"
-              id="product-title"
-              placeholder="Enter Title of Product"
-            />
-            <input
-              type="number"
-              id="user-amount"
-              placeholder="Enter Cost of Product"
-            />
-            <button class="submit" id="check-amount">Check Amount</button>
-          </div>
+
+            <div class="input-group">
+              <span class="input-prefix" id="budget-prefix">₹</span>
+              <input
+                type="number"
+                id="total-amount"
+                class="form-control with-prefix"
+                placeholder="e.g. 50000"
+                min="1"
+                step="any"
+              />
+            </div>
+
+            <!-- Quick Budget Increments -->
+            <div class="quick-presets">
+              <span class="preset-label">Quick Add:</span>
+              <div class="preset-chips">
+                <button type="button" class="chip-btn" data-add-budget="1000">+1,000</button>
+                <button type="button" class="chip-btn" data-add-budget="5000">+5,000</button>
+                <button type="button" class="chip-btn" data-add-budget="10000">+10,000</button>
+                <button type="button" class="chip-btn" data-add-budget="25000">+25,000</button>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-block" id="total-amount-button">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>Update Budget</span>
+            </button>
+          </section>
+
+          <!-- Add / Edit Expense Card -->
+          <section class="card input-card" id="expense-form-card" aria-labelledby="expense-card-title">
+            <div class="card-header">
+              <div class="card-title-group">
+                <i class="fa-solid fa-receipt header-accent-icon"></i>
+                <h2 id="expense-card-title">Add New Expense</h2>
+              </div>
+              <span class="editing-badge hide" id="editing-indicator">
+                <i class="fa-solid fa-pen-to-square"></i> Editing
+              </span>
+            </div>
+
+            <p class="error-msg hide" id="product-title-error">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              Please provide both an expense title and valid amount
+            </p>
+
+            <!-- Title & Amount Inputs -->
+            <div class="form-row">
+              <div class="form-group flex-2">
+                <label for="product-title" class="form-label">Expense Title</label>
+                <div class="input-group">
+                  <span class="input-prefix"><i class="fa-solid fa-tag"></i></span>
+                  <input
+                    type="text"
+                    id="product-title"
+                    class="form-control with-prefix product-title"
+                    placeholder="e.g. Grocery shopping"
+                    maxlength="50"
+                  />
+                </div>
+              </div>
+
+              <div class="form-group flex-1">
+                <label for="user-amount" class="form-label">Amount</label>
+                <div class="input-group">
+                  <span class="input-prefix" id="expense-prefix">₹</span>
+                  <input
+                    type="number"
+                    id="user-amount"
+                    class="form-control with-prefix"
+                    placeholder="0.00"
+                    min="0.01"
+                    step="any"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Category & Date Inputs -->
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="expense-category" class="form-label">Category</label>
+                <div class="input-group">
+                  <span class="input-prefix"><i class="fa-solid fa-shapes"></i></span>
+                  <select id="expense-category" class="form-control with-prefix select-control">
+                    <option value="Food & Dining" data-icon="🍔">🍔 Food & Dining</option>
+                    <option value="Shopping" data-icon="🛍️">🛍️ Shopping</option>
+                    <option value="Housing & Bills" data-icon="🏠">🏠 Housing & Bills</option>
+                    <option value="Transportation" data-icon="🚗">🚗 Transportation</option>
+                    <option value="Entertainment" data-icon="🎮">🎮 Entertainment</option>
+                    <option value="Healthcare" data-icon="💊">💊 Healthcare</option>
+                    <option value="Education" data-icon="📚">📚 Education</option>
+                    <option value="Other" data-icon="🏷️">🏷️ Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group flex-1">
+                <label for="expense-date" class="form-label">Date</label>
+                <div class="input-group">
+                  <span class="input-prefix"><i class="fa-solid fa-calendar-day"></i></span>
+                  <input
+                    type="date"
+                    id="expense-date"
+                    class="form-control with-prefix"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Presets -->
+            <div class="quick-presets">
+              <span class="preset-label">Instant Add Presets:</span>
+              <div class="preset-chips">
+                <button type="button" class="preset-btn" data-title="Coffee & Snacks" data-amount="150" data-cat="Food & Dining">
+                  ☕ Coffee ₹150
+                </button>
+                <button type="button" class="preset-btn" data-title="Lunch" data-amount="350" data-cat="Food & Dining">
+                  🥗 Lunch ₹350
+                </button>
+                <button type="button" class="preset-btn" data-title="Grocery Market" data-amount="1200" data-cat="Shopping">
+                  🛒 Groceries ₹1.2k
+                </button>
+                <button type="button" class="preset-btn" data-title="Fuel & Transport" data-amount="800" data-cat="Transportation">
+                  ⛽ Fuel ₹800
+                </button>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="form-actions-row">
+              <button class="btn btn-primary flex-1" id="check-amount">
+                <i class="fa-solid fa-plus" id="add-btn-icon"></i>
+                <span id="add-btn-text">Add Expense</span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary hide"
+                id="cancel-edit-btn"
+              >
+                Cancel
+              </button>
+            </div>
+          </section>
         </div>
-        <!-- Output -->
-        <div class="output-container flex-space">
-          <div>
-            <p>Total Budget</p>
-            <span id="amount">0</span>
-          </div>
-          <div>
-            <p>Expenses</p>
-            <span id="expenditure-value">0</span>
-          </div>
-          <div>
-            <p>Balance</p>
-            <span id="balance-amount">0</span>
-          </div>
+
+        <!-- RIGHT COLUMN: Analytics, Charts & Expense List -->
+        <div class="dashboard-col right-col">
+          <!-- Interactive Analytics & Chart Card -->
+          <section class="card chart-card" aria-labelledby="chart-card-title">
+            <div class="card-header">
+              <div class="card-title-group">
+                <i class="fa-solid fa-chart-pie header-accent-icon"></i>
+                <h2 id="chart-card-title">Spending Analytics</h2>
+              </div>
+              <span class="analytics-subtext" id="top-category-indicator">Categorized breakdown</span>
+            </div>
+
+            <div class="chart-content-wrapper">
+              <div class="chart-canvas-box">
+                <canvas id="category-chart"></canvas>
+                <div class="chart-empty-state hide" id="chart-empty">
+                  <i class="fa-solid fa-chart-pie"></i>
+                  <p>No expenses recorded yet</p>
+                </div>
+              </div>
+              <div class="category-breakdown-list" id="category-breakdown-list">
+                <!-- Dynamically populated with category percentage bars -->
+              </div>
+            </div>
+          </section>
+
+          <!-- Expense History & Filter Section -->
+          <section class="card list-card" aria-labelledby="list-card-title">
+            <div class="card-header list-card-header">
+              <div class="card-title-group">
+                <i class="fa-solid fa-list-check header-accent-icon"></i>
+                <h2 id="list-card-title">Expense History</h2>
+              </div>
+
+              <!-- Export CSV Button -->
+              <button id="export-csv-btn" class="btn-ghost" title="Export transactions to CSV">
+                <i class="fa-solid fa-file-arrow-down"></i>
+                <span class="btn-text">Export CSV</span>
+              </button>
+            </div>
+
+            <!-- Interactive Filters and Search Bar -->
+            <div class="filters-bar">
+              <div class="search-input-group">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input
+                  type="text"
+                  id="search-expense"
+                  class="search-control"
+                  placeholder="Search expenses by title..."
+                />
+                <button id="clear-search" class="clear-search-btn hide" title="Clear search">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+
+              <div class="filter-controls-row">
+                <div class="filter-select-wrapper">
+                  <select id="category-filter" class="filter-select" title="Filter by category">
+                    <option value="ALL">All Categories</option>
+                    <option value="Food & Dining">Food & Dining</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Housing & Bills">Housing & Bills</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Education">Education</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div class="filter-select-wrapper">
+                  <select id="sort-filter" class="filter-select" title="Sort order">
+                    <option value="date-desc">Newest First</option>
+                    <option value="date-asc">Oldest First</option>
+                    <option value="amount-desc">Amount: High to Low</option>
+                    <option value="amount-asc">Amount: Low to High</option>
+                    <option value="title-asc">Title: A to Z</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive Expense List -->
+            <div class="expense-list-container" id="list" role="list">
+              <!-- Dynamically populated transaction cards -->
+            </div>
+
+            <!-- Empty State for List -->
+            <div class="empty-list-state hide" id="empty-state">
+              <div class="empty-icon-circle">
+                <i class="fa-regular fa-folder-open"></i>
+              </div>
+              <h3>No expenses found</h3>
+              <p>Add your first expense or click "Demo Data" above to view sample insights.</p>
+            </div>
+          </section>
         </div>
-      </div>
-      <!-- List -->
-      <div class="list">
-        <h3>Expense List</h3>
-        <div class="list-container" id="list"></div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <p>SmartBudget &bull; Interactive Financial Management Dashboard</p>
+      </footer>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+    <!-- Confirmation Modal Dialog -->
+    <div class="modal-overlay hide" id="confirm-modal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-icon-badge danger">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <h3 id="modal-title">Reset All Data?</h3>
+        </div>
+        <p class="modal-message" id="modal-message">
+          This will clear your current budget, all recorded expenses, and reset the dashboard. This action cannot be undone.
+        </p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+          <button class="btn btn-danger" id="modal-confirm-btn">Yes, Reset All</button>
+        </div>
       </div>
     </div>
-    <!-- Script -->
+
+    <!-- Core Script -->
     <script src="script.js"></script>
   </body>
 </html>
